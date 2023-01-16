@@ -5,7 +5,7 @@
 #include <cassert>
 #include <algorithm>
 
-namespace NN
+namespace nn
 {
 
     // Dense Layer
@@ -26,8 +26,8 @@ namespace NN
             }
 
             Dense(std::array<TYPE, DIM1*DIM2>&& mat_init, std::array<TYPE, DIM2>&& bias_init) :
-                weight_matrix{std::forward(mat_init)},
-                bias_vector{std::forward(bias_init)} {}
+                weight_matrix{mat_init},
+                bias_vector{bias_init} {}
 
             Dense(const std::array<TYPE, DIM1*DIM2>& mat_init, const std::array<TYPE, DIM2>& bias_init) :
                 weight_matrix{mat_init},

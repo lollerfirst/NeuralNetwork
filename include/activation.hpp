@@ -4,7 +4,7 @@
 #include <array>
 #include <cmath>
 
-namespace NN
+namespace nn
 {
     typedef enum
     {
@@ -22,12 +22,12 @@ namespace NN
 
             Activation() : output{} {}
 
-            std::array<TYPE, DIM> apply(const std::array<TYPE, DIM>&) const noexcept;
+            std::array<TYPE, DIM> apply(const std::array<TYPE, DIM>&) noexcept;
             std::array<TYPE, DIM> update(const std::array<TYPE, DIM>&) const noexcept;
     };
 
-    template<typename TYPE, int DIM, ActMode ACT_MODE>
-    std::array<TYPE, DIM> Activation<TYPE, DIM, ACT_MODE>::apply(const std::array<TYPE, DIM>& in_vector) const noexcept
+    template <typename TYPE, int DIM, ActMode ACT_MODE>
+    std::array<TYPE, DIM> Activation<TYPE, DIM, ACT_MODE>::apply(const std::array<TYPE, DIM>& in_vector) noexcept
     {
         std::array<TYPE, DIM> out_vector{};
 
@@ -82,14 +82,14 @@ namespace NN
 
         if constexpr (ACT_MODE == RELU)
         {
-            for(int i=0; i<DIM; i++)
+            for (int i=0; i<DIM; i++)
             {
                 out_gradient[i] = (this->output[i] > 0) ? in_gradient[i] : 0;
             }
         }
         else if constexpr (ACT_MODE == SOFTMAX || ACT_MODE == SIGMOID)
         {
-            for(int i=0; i<DIM; i++)
+            for (int i=0; i<DIM; i++)
             {
                 out_gradient[i] = in_gradient[i] * (this->output[i] * (1 - this->output[i]));
             }
