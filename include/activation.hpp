@@ -16,8 +16,13 @@ namespace NN
     template <typename TYPE, int DIM, ActMode ACT_MODE>
     class Activation
     {
-        std::array<TYPE, DIM> apply(const std::array<TYPE, DIM>&) const noexcept;
-        std::array<TYPE, DIM> update(const std::array<TYPE, DIM>&) const noexcept;
+        public:
+            std::array<TYPE, DIM> output;
+
+            Activation() : output{} {}
+
+            std::array<TYPE, DIM> apply(const std::array<TYPE, DIM>&) const noexcept;
+            std::array<TYPE, DIM> update(const std::array<TYPE, DIM>&) const noexcept;
     };
 
     template<typename TYPE, int DIM, ActMode ACT_MODE>
@@ -29,7 +34,7 @@ namespace NN
         {
             for (int i = 0; i < DIM; ++i)
             {
-                out_vector[i] = std::max(static_cast<TYPE>(0), in_vector[i]);
+                this->output[i] = out_vector[i] = std::max(static_cast<TYPE>(0), in_vector[i]);
             }
         }
         else if constexpr (ACT_MODE == SOFTMAX)
@@ -54,7 +59,7 @@ namespace NN
             // Normalize the output vector
             for (int i = 0; i < DIM; ++i)
             {
-                out_vector[i] /= sum;
+                this->output[i] = (out_vector[i] /= sum);
             }
         }
         else if constexpr (ACT_MODE == SIGMOID)
@@ -62,7 +67,7 @@ namespace NN
             // SIGMOID IMPLEMENTATION
             for (int i=0; i < DIM; ++i)
             {
-                out_vector[i] = std::exp(in_vector[i]) / (1 + std::exp(in_vector[i]));
+                this->output[i] = out_vector[i] = std::exp(in_vector[i]) / (1 + std::exp(in_vector[i]));
             }
         }
 
@@ -76,15 +81,17 @@ namespace NN
 
         if constexpr (ACT_MODE == RELU)
         {
-
+            for(int i=0; i<DIM; i++)
+            {
+                out_gradient[i] = (this->output[i] > 0) ? in_gradient[i] : 0;
+            }
         }
-        else if constexpr (ACT_MODE == SOFTMAX)
+        else if constexpr (ACT_MODE == SOFTMAX || ACT_MODE == SIGMOID)
         {
-
-        }
-        else if constexpr (ACT_MODE == SIGMOID)
-        {
-
+            for(int i=0; i<DIM; i++)
+            {
+                out_gradient[i] = in_gradient[i] * (this->output[i] * (1 - this->output[i]));
+            }
         }
 
         return out_gradient;
