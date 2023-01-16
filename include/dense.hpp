@@ -7,6 +7,8 @@
 
 namespace NN
 {
+
+    // Dense Layer
     template <typename TYPE, int DIM1, int DIM2>
     class Dense
     {

@@ -13,6 +13,7 @@ namespace NN
         SIGMOID
     } ActMode;
 
+    // Activation Layer
     template <typename TYPE, int DIM, ActMode ACT_MODE>
     class Activation
     {
