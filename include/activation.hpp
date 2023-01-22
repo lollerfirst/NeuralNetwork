@@ -20,7 +20,7 @@ namespace nn
         public:
             std::array<TYPE, DIM> output;
 
-            Activation() : output{} {}
+            constexpr Activation() : output{} {}
 
             std::array<TYPE, DIM> apply(const std::array<TYPE, DIM>&) noexcept;
             std::array<TYPE, DIM> update(const std::array<TYPE, DIM>&) const noexcept;
