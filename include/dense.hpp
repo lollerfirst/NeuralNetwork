@@ -1,16 +1,18 @@
 #ifndef NN_FEEDFORWARD_H
 #define NN_FEEDFORWARD_H
 
+#include <cstddef>
 #include <array>
 #include <cassert>
 #include <algorithm>
+#include <component.hpp>
 
 namespace nn
 {
 
     // Dense Layer
-    template <typename TYPE, int DIM1, int DIM2>
-    class Dense
+    template <typename TYPE, size_t DIM1, size_t DIM2>
+    class Dense : Component
     {
         public:
 
@@ -18,20 +20,23 @@ namespace nn
             std::array<TYPE, DIM2> bias_vector;
 
             Dense(std::initializer_list<TYPE> mat_init_list,
-                std::initializer_list<TYPE> bias_init_list)
+                std::initializer_list<TYPE> bias_init_list) : 
+                comptype{DENSE}
             {
                 assert(mat_init_list.size() == DIM1*DIM2 && bias_init_list.size() == DIM2);
                 std::copy(mat_init_list.begin(), mat_init_list.end(), weight_matrix.begin());
                 std::copy(bias_init_list.begin(), bias_init_list.end(), bias_vector.begin());
             }
 
-            Dense(std::array<TYPE, DIM1*DIM2>&& mat_init, std::array<TYPE, DIM2>&& bias_init) :
+            constexpr Dense(std::array<TYPE, DIM1*DIM2>&& mat_init, std::array<TYPE, DIM2>&& bias_init) :
                 weight_matrix{mat_init},
-                bias_vector{bias_init} {}
+                bias_vector{bias_init},
+                comptype{DENSE} {}
 
-            Dense(const std::array<TYPE, DIM1*DIM2>& mat_init, const std::array<TYPE, DIM2>& bias_init) :
+            constexpr Dense(const std::array<TYPE, DIM1*DIM2>& mat_init, const std::array<TYPE, DIM2>& bias_init) :
                 weight_matrix{mat_init},
-                bias_vector{bias_init} {}
+                bias_vector{bias_init},
+                comptype{DENSE} {}
 
 
             std::array<TYPE, DIM2> apply(const std::array<TYPE, DIM1>& in_vector) const noexcept;
@@ -39,7 +44,7 @@ namespace nn
     };
 
     // Processing
-    template<typename TYPE, int DIM1, int DIM2>
+    template<typename TYPE, size_t DIM1, size_t DIM2>
     std::array<TYPE, DIM2> Dense<TYPE, DIM1, DIM2>::apply(const std::array<TYPE, DIM1>& in_vector) const noexcept
     {
         std::array<TYPE, DIM2> out_vector;
@@ -56,7 +61,7 @@ namespace nn
     }
 
     // Backpropagation
-    template <typename TYPE, int DIM1, int DIM2>
+    template <typename TYPE, size_t DIM1, size_t DIM2>
     std::array<TYPE, DIM1> Dense<TYPE, DIM1, DIM2>::update(const std::array<TYPE, DIM2>& in_gradient, const TYPE learning_rate) noexcept
     {
         std::array<TYPE, DIM1> out_gradient{};

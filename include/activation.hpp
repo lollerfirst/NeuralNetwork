@@ -15,12 +15,12 @@ namespace nn
 
     // Activation Layer
     template <typename TYPE, int DIM, ActMode ACT_MODE>
-    class Activation
+    class Activation : Component
     {
         public:
             std::array<TYPE, DIM> output;
 
-            constexpr Activation() : output{} {}
+            constexpr Activation() : output{}, comptype{ACTIVATION} {}
 
             std::array<TYPE, DIM> apply(const std::array<TYPE, DIM>&) noexcept;
             std::array<TYPE, DIM> update(const std::array<TYPE, DIM>&) const noexcept;
