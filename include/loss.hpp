@@ -16,26 +16,17 @@ namespace nn
     }
     LossType;
 
-    template <typename TYPE, int DIM, LossType LOSS_TYPE>
-    class Loss
+    template <typename TYPE, LossType LOSS_TYPE>
+    std::vector<TYPE> calculate_gradient_vector(const std::vector<TYPE>& in_vector,
+        const std::vector<TYPE>& target) noexcept
     {
-        public:
-            std::array<TYPE, DIM> calculate_gradient_vector(const std::array<TYPE, DIM>& in_vector,
-                const std::array<TYPE, DIM>& targets) const;
-            
-            TYPE calculate_loss(const std::array<TYPE, DIM>& in_vector,
-            const std::array<TYPE, DIM>& target) const;
-    };
+        static_assert(in_vector.size() == target.size());
 
-    template <typename TYPE, int DIM, LossType LOSS_TYPE>
-    std::array<TYPE, DIM> Loss<TYPE, DIM, LOSS_TYPE>::calculate_gradient_vector(const std::array<TYPE, DIM>& in_vector,
-        const std::array<TYPE, DIM>& target) const
-    {
-        std::array<TYPE, DIM> out_gradient;
+        std::vector<TYPE> out_gradient;
+        out_gradient.reserve(in_vector.size());
+        
         // Calculate derivative with respect to each input
-
-
-        if (LOSS_TYPE == MEAN_SQUARED)
+        if constexpr (LOSS_TYPE == MEAN_SQUARED)
         {
             // (2/n) * (x-y)
             auto x = in_vector.begin();
@@ -47,7 +38,7 @@ namespace nn
             });
         }
 
-        if (LOSS_TYPE == MEAN_ABSOLUTE)
+        if constexpr (LOSS_TYPE == MEAN_ABSOLUTE)
         {
             auto x = in_vector.begin();
             auto y = target.begin();
@@ -58,7 +49,7 @@ namespace nn
             });
         }
 
-        if (LOSS_TYPE == CROSS_ENTROPY)
+        if constexpr (LOSS_TYPE == CROSS_ENTROPY)
         {
             auto x = in_vector.begin();
             auto y = target.begin();
@@ -73,10 +64,10 @@ namespace nn
         return out_gradient;
     }
 
-    template <typename TYPE, int DIM, LossType LOSS_TYPE>
-    TYPE Loss<TYPE, DIM, LOSS_TYPE>::calculate_loss(const std::array<TYPE, DIM>& in_vector,
-        const std::array<TYPE, DIM>& target_vector) const
+    template <typename TYPE, LossType LOSS_TYPE>
+    TYPE calculate_loss(const std::vector<TYPE>& in_vector, const std::vector<TYPE>& target_vector)
     {
+        static_assert(in_vector.size() == target_vector.size());
 
         if constexpr (LOSS_TYPE == MEAN_SQUARED)
         {

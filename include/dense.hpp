@@ -2,88 +2,93 @@
 #define NN_FEEDFORWARD_H
 
 #include <cstddef>
-#include <array>
-#include <cassert>
+#include <vector>
 #include <algorithm>
-#include <component.hpp>
 
 namespace nn
 {
 
     // Dense Layer
-    template <typename TYPE, size_t DIM1, size_t DIM2>
-    class Dense : Component
+    template <typename TYPE>
+    struct Dense
     {
         public:
 
-            std::array<TYPE, DIM1*DIM2> weight_matrix;
-            std::array<TYPE, DIM2> bias_vector;
+            std::vector<TYPE> weight_matrix;
+            std::vector<TYPE> bias_vector;
+            TYPE learning_rate;
 
             Dense(std::initializer_list<TYPE> mat_init_list,
-                std::initializer_list<TYPE> bias_init_list) : 
-                comptype{DENSE}
+                std::initializer_list<TYPE> bias_init_list,
+                TYPE learning_rate) : 
+                learning_rate{learning_rate}
             {
-                assert(mat_init_list.size() == DIM1*DIM2 && bias_init_list.size() == DIM2);
+                static_assert(mat_init_list.size() % bias_init_list.size() == 0);
                 std::copy(mat_init_list.begin(), mat_init_list.end(), weight_matrix.begin());
                 std::copy(bias_init_list.begin(), bias_init_list.end(), bias_vector.begin());
             }
 
-            constexpr Dense(std::array<TYPE, DIM1*DIM2>&& mat_init, std::array<TYPE, DIM2>&& bias_init) :
+            constexpr Dense(std::vector<TYPE>&& mat_init, std::vector<TYPE>&& bias_init) :
                 weight_matrix{mat_init},
                 bias_vector{bias_init},
                 comptype{DENSE} {}
 
-            constexpr Dense(const std::array<TYPE, DIM1*DIM2>& mat_init, const std::array<TYPE, DIM2>& bias_init) :
+            constexpr Dense(const std::vector<TYPE>& mat_init, const std::vector<TYPE>& bias_init) :
                 weight_matrix{mat_init},
                 bias_vector{bias_init},
                 comptype{DENSE} {}
 
-
-            std::array<TYPE, DIM2> apply(const std::array<TYPE, DIM1>& in_vector) const noexcept;
-            std::array<TYPE, DIM1> update(const std::array<TYPE, DIM2>& in_gradient, const TYPE learning_rate) noexcept;
     };
 
     // Processing
-    template<typename TYPE, size_t DIM1, size_t DIM2>
-    std::array<TYPE, DIM2> Dense<TYPE, DIM1, DIM2>::apply(const std::array<TYPE, DIM1>& in_vector) const noexcept
+    template<typename TYPE>
+    std::vector<TYPE> apply(const Dense<TYPE>& dense, const std::vector<TYPE>& in_vector) noexcept
     {
-        std::array<TYPE, DIM2> out_vector;
 
-        for (int i = 0; i < DIM2; ++i)
+        static_assert(dense.weight_matrix.size() / dense.bias_vector.size() == in_vector.size());
+        std::vector<TYPE> out_vector;
+        out_vector.reserve(dense.bias_vector.size());
+
+        for (std::size_t i = 0; i < dense.bias_vector.size(); ++i)
         {
-            out_vector[i] = bias_vector[i];
+            out_vector[i] = dense.bias_vector[i];
             
-            for (int j = 0; j < DIM1; ++j)
-                out_vector[i] += in_vector[j] * weight_matrix[i * DIM1 + j];
+            for (std::size_t j = 0; j < in_vector.size(); ++j)
+                out_vector[i] += in_vector[j] * dense.weight_matrix[i * in_vector.size() + j];
         }
         
         return out_vector;
     }
 
     // Backpropagation
-    template <typename TYPE, size_t DIM1, size_t DIM2>
-    std::array<TYPE, DIM1> Dense<TYPE, DIM1, DIM2>::update(const std::array<TYPE, DIM2>& in_gradient, const TYPE learning_rate) noexcept
+    template <typename TYPE>
+    std::vector<TYPE> update(Dense<TYPE>& dense, const std::vector<TYPE>& in_gradient) noexcept
     {
-        std::array<TYPE, DIM1> out_gradient{};
+        static_assert(in_gradient.size() == dense.bias_vector.size());
+
+        std::vector<TYPE> out_gradient{};
+        std::size_t out_gradient_size = dense.weight_matrix.size() / dense.bias_vector.size();
+        out_gradient.reserve(out_gradient_size);
 
         // Compute out_gradient
-        for (int i = 0; i < DIM1; ++i) {
+        for (std::size_t i = 0; i < out_gradient_size; ++i) {
             out_gradient[i] = 0;
-            for (int j = 0; j < DIM2; ++j) {
-                out_gradient[i] += in_gradient[j] * weight_matrix[i * DIM2 + j];
+            
+            for (std::size_t j = 0; j < dense.bias_vector.size(); ++j) {
+                out_gradient[i] += in_gradient[j] * weight_matrix[i * dense.bias_vector.size() + j];
             }
         }
 
         // Update weight_matrix
-        for (int i = 0; i < DIM1; ++i) {
-            for (int j = 0; j < DIM2; ++j) {
-                weight_matrix[j * DIM1 + i] -= learning_rate * in_gradient[j] * out_gradient[i];
+        for (std::size_t i = 0; i < out_gradient_size; ++i) {
+            for (std::size_t j = 0; j < dense.bias_vector.size(); ++j) {
+                dense.weight_matrix[j * dense.bias_vector.size() + i] -= dense.learning_rate * in_gradient[j] * out_gradient[i];
             }
         }
 
         // Update bias_vector
-        for (int i = 0; i < DIM2; ++i) {
-            bias_vector[i] -= learning_rate * in_gradient[i];
+        for (std::size_t i = 0; i < dense.bias_vector.size(); ++i) {
+            dense.bias_vector[i] -= dense.learning_rate * in_gradient[i];
         }
 
         return out_gradient;
