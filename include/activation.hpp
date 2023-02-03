@@ -1,8 +1,9 @@
 #ifndef _ACTIVATION_H
 #define _ACTIVATION_H
 
-#include <array>
+#include <vector>
 #include <cmath>
+#include <cassert>
 
 namespace nn
 {
@@ -19,18 +20,17 @@ namespace nn
     {
         public:
             std::vector<TYPE> output;
+            std::size_t dimension;
 
-            constexpr Activation(size_t dim) : output{}
-            {
-                output.reserve(dim);
-            }
+            constexpr Activation(size_t dim) : output{}, dimension{dim}
+            {}
 
     };
 
     template <typename TYPE, ActMode ACT_MODE>
     std::vector<TYPE> apply(Activation<TYPE, ACT_MODE>& activation, const std::vector<TYPE>& in_vector) noexcept
     {
-        static_assert(activation.output.size() == in_vector.size());
+        assert(activation.dimension == in_vector.size());
 
         std::vector<TYPE> out_vector;
         out_vector.reserve(in_vector.size());
@@ -38,9 +38,9 @@ namespace nn
         if constexpr (ACT_MODE == RELU)
         {
             for (auto i = in_vector.begin(),
-                j = out_vector.begin(); i != in_vector.end(); ++i, ++j;)
+                j = out_vector.begin(); i != in_vector.end(); ++i, ++j)
             {
-                *j = std::max(static_cast<TYPE>(0), *i))
+                *j = std::max(static_cast<TYPE>(0), *i);
                 activation.output.push_back(*j);
             }
         }
@@ -58,6 +58,7 @@ namespace nn
             {  
                 *j = *i - max_val;
             }
+
             // Compute exponentials and sum them up
             auto sum = 0;
             for (auto i = out_vector.begin(); i != out_vector.end(); ++i)
@@ -86,9 +87,9 @@ namespace nn
     }
 
     template<typename TYPE, ActMode ACT_MODE>
-    std::vector<TYPE> update(const Activation<TYPE, DIM, ACT_MODE>& activation, const std::vector<TYPE>& in_gradient) noexcept
+    std::vector<TYPE> update(const Activation<TYPE, ACT_MODE>& activation, const std::vector<TYPE>& in_gradient) noexcept
     {
-        static_assert(activation.output.size() == in_gradient.size())
+        assert(activation.dimension == in_gradient.size());
 
         std::vector<TYPE> out_gradient{};
         out_gradient.reserve(in_gradient.size());

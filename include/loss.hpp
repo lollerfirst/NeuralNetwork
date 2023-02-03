@@ -23,7 +23,8 @@ namespace nn
         static_assert(in_vector.size() == target.size());
 
         std::vector<TYPE> out_gradient;
-        out_gradient.reserve(in_vector.size());
+        const std::size_t in_vector_size = in_vector.size();
+        out_gradient.reserve(in_vector_size);
         
         // Calculate derivative with respect to each input
         if constexpr (LOSS_TYPE == MEAN_SQUARED)
@@ -32,8 +33,8 @@ namespace nn
             auto x = in_vector.begin();
             auto y = target.begin();
 
-            std::for_each(out_gradient.begin(), out_gradient.end(), [=](TYPE& el) mutable{
-                el = static_cast<TYPE>(2.0/DIM * ((*x) - (*y)));
+            std::for_each(out_gradient.begin(), out_gradient.end(), [=](auto& el) mutable{
+                el = static_cast<TYPE>((2.0/in_vector_size) * ((*x) - (*y)));
                 ++x; ++y;
             });
         }
@@ -43,8 +44,13 @@ namespace nn
             auto x = in_vector.begin();
             auto y = target.begin();
 
-            std::for_each(out_gradient.begin(), out_gradient.end(), [=](TYPE& el) mutable{
-                el = static_cast<TYPE>(2.0/DIM * ((*x) - (*y)));
+            auto sign = [](auto x) -> decltype(x) {
+                if (x == 0) return 0;
+                return (x > 0) ? 1 : -1;
+            };
+
+            std::for_each(out_gradient.begin(), out_gradient.end(), [=](auto& el) mutable{
+                el = static_cast<TYPE>((1.0/in_vector_size) * sign((*x) - (*y)));
                 ++x; ++y;
             });
         }
@@ -54,7 +60,7 @@ namespace nn
             auto x = in_vector.begin();
             auto y = target.begin();
 
-            std::for_each(out_gradient.begin(), out_gradient.end(), [=](TYPE& el) mutable{
+            std::for_each(out_gradient.begin(), out_gradient.end(), [=](auto& el) mutable{
                 el = -1.0 * ((*y) / (*x));
                 ++x; ++y;
             });

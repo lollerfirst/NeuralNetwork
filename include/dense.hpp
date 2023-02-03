@@ -28,15 +28,17 @@ namespace nn
                 std::copy(bias_init_list.begin(), bias_init_list.end(), bias_vector.begin());
             }
 
-            constexpr Dense(std::vector<TYPE>&& mat_init, std::vector<TYPE>&& bias_init) :
+            constexpr Dense(std::vector<TYPE>&& mat_init, std::vector<TYPE>&& bias_init, TYPE learning_rate) :
                 weight_matrix{mat_init},
                 bias_vector{bias_init},
-                comptype{DENSE} {}
+                learning_rate{learning_rate}
+                {}
 
-            constexpr Dense(const std::vector<TYPE>& mat_init, const std::vector<TYPE>& bias_init) :
+            constexpr Dense(const std::vector<TYPE>& mat_init, const std::vector<TYPE>& bias_init, TYPE learning_rate) :
                 weight_matrix{mat_init},
                 bias_vector{bias_init},
-                comptype{DENSE} {}
+                learning_rate{learning_rate}
+                {}
 
     };
 
@@ -75,14 +77,14 @@ namespace nn
             out_gradient[i] = 0;
             
             for (std::size_t j = 0; j < dense.bias_vector.size(); ++j) {
-                out_gradient[i] += in_gradient[j] * weight_matrix[i * dense.bias_vector.size() + j];
+                out_gradient[i] += in_gradient[j] * weight_matrix[j * out_gradient_size + i];
             }
         }
 
         // Update weight_matrix
         for (std::size_t i = 0; i < out_gradient_size; ++i) {
             for (std::size_t j = 0; j < dense.bias_vector.size(); ++j) {
-                dense.weight_matrix[j * dense.bias_vector.size() + i] -= dense.learning_rate * in_gradient[j] * out_gradient[i];
+                dense.weight_matrix[j * out_gradient_size + i] -= dense.learning_rate * in_gradient[j] * out_gradient[i];
             }
         }
 
