@@ -1,7 +1,7 @@
 #ifndef _ACTIVATION_H
 #define _ACTIVATION_H
 
-#include <vector>
+#include <array>
 #include <cmath>
 #include <cassert>
 
@@ -12,46 +12,40 @@ namespace nn
         RELU,
         SOFTMAX,
         SIGMOID
-    } ActMode;
+    } actmode_t;
 
     // Activation Layer
-    template <typename TYPE, ActMode ACT_MODE>
+    template <typename TYPE, actmode_t ACT_MODE, std::size_t DIM>
     struct Activation
     {
         public:
-            std::vector<TYPE> output;
-            std::size_t dimension;
-
-            constexpr Activation(size_t dim) : output{}, dimension{dim}
-            {}
+            std::array<TYPE, DIM> output;
 
     };
 
-    template <typename TYPE, ActMode ACT_MODE>
-    std::vector<TYPE> apply(Activation<TYPE, ACT_MODE>& activation, const std::vector<TYPE>& in_vector) noexcept
+    template <typename TYPE, actmode_t ACT_MODE, std::size_t DIM>
+    std::array<TYPE, DIM> apply(Activation<TYPE, ACT_MODE, DIM>& activation, const std::array<TYPE, DIM>& in_vector) noexcept
     {
-        assert(activation.dimension == in_vector.size());
-
-        std::vector<TYPE> out_vector;
-        out_vector.reserve(in_vector.size());
+        std::array<TYPE, DIM> out_vector;
 
         if constexpr (ACT_MODE == RELU)
         {
             for (auto i = in_vector.begin(),
-                j = out_vector.begin(); i != in_vector.end(); ++i, ++j)
+                j = out_vector.begin(),
+                k = activation.output.begin(); i != in_vector.end(); ++i, ++j, ++k)
             {
-                *j = std::max(static_cast<TYPE>(0), *i);
-                activation.output.push_back(*j);
+                *k = *j = std::max(static_cast<TYPE>(0), *i);
             }
         }
         else if constexpr (ACT_MODE == SOFTMAX)
         {
             // Find the max value in the input vector
-            auto max_val = in_vector.at(0);
-            for (auto i = ++in_vector.begin(); i != in_vector.end(); ++i)
+            auto max_val = in_vector[0];
+            for (auto i = in_vector.begin(); i != in_vector.end(); ++i)
             {
                 max_val = std::max(max_val, *i);
             }
+
             // Subtract the max value from all input values
             for (auto i = in_vector.begin(),
                 j = out_vector.begin(); i != in_vector.end(); ++i, ++j)
@@ -86,13 +80,10 @@ namespace nn
         return out_vector;
     }
 
-    template<typename TYPE, ActMode ACT_MODE>
-    std::vector<TYPE> update(const Activation<TYPE, ACT_MODE>& activation, const std::vector<TYPE>& in_gradient) noexcept
+    template<typename TYPE, actmode_t ACT_MODE, std::size_t DIM>
+    std::array<TYPE, DIM> update(const Activation<TYPE, ACT_MODE, DIM>& activation, const std::array<TYPE, DIM>& in_gradient) noexcept
     {
-        assert(activation.dimension == in_gradient.size());
-
-        std::vector<TYPE> out_gradient{};
-        out_gradient.reserve(in_gradient.size());
+        std::array<TYPE, DIM> out_gradient{};
 
         if constexpr (ACT_MODE == RELU)
         {

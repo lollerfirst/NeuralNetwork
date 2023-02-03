@@ -14,17 +14,15 @@ namespace nn
         MEAN_ABSOLUTE,
         CROSS_ENTROPY
     }
-    LossType;
+    losstype_t;
 
-    template <typename TYPE, LossType LOSS_TYPE>
-    std::vector<TYPE> calculate_gradient_vector(const std::vector<TYPE>& in_vector,
-        const std::vector<TYPE>& target) noexcept
+    template <typename TYPE, std::size_t DIM>
+    std::array<TYPE, DIM> calculate_gradient_vector(losstype_t LOSS_TYPE,
+        const Loss<LossType>& loss,
+        const std::array<TYPE, DIM>& in_vector,
+        const std::array<TYPE, DIM>& target) noexcept
     {
-        static_assert(in_vector.size() == target.size());
-
-        std::vector<TYPE> out_gradient;
-        const std::size_t in_vector_size = in_vector.size();
-        out_gradient.reserve(in_vector_size);
+        std::array<TYPE, DIM> out_gradient;
         
         // Calculate derivative with respect to each input
         if constexpr (LOSS_TYPE == MEAN_SQUARED)
@@ -70,10 +68,9 @@ namespace nn
         return out_gradient;
     }
 
-    template <typename TYPE, LossType LOSS_TYPE>
-    TYPE calculate_loss(const std::vector<TYPE>& in_vector, const std::vector<TYPE>& target_vector)
+    template <typename TYPE, std::size_t DIM>
+    TYPE calculate_loss(losstype_t LOSS_TYPE, const std::array<TYPE, DIM>& in_vector, const std::array<TYPE, DIM>& target_vector)
     {
-        static_assert(in_vector.size() == target_vector.size());
 
         if constexpr (LOSS_TYPE == MEAN_SQUARED)
         {
