@@ -45,7 +45,7 @@ namespace nn
 
     // Processing
     template<typename TYPE, std::size_t DIM1, std::size_t DIM2>
-    std::array<TYPE, DIM2> apply(const Dense<TYPE, DIM1, DIM2>& dense, const std::vector<TYPE, DIM1>& in_vector) noexcept
+    std::array<TYPE, DIM2> apply(const Dense<TYPE, DIM1, DIM2>& dense, const std::array<TYPE, DIM1>& in_vector) noexcept
     {
         std::array<TYPE, DIM2> out_vector;
 
@@ -53,7 +53,7 @@ namespace nn
         {
             out_vector[i] = dense.bias_vector[i];
             
-            for (std::size_t j = 0; j < in_vector.size(); ++j)
+            for (std::size_t j = 0; j < DIM1; ++j)
                 out_vector[i] += in_vector[j] * dense.weight_matrix[i * DIM1 + j];
         }
         
@@ -62,7 +62,7 @@ namespace nn
 
     // Backpropagation
     template <typename TYPE, std::size_t DIM1, std::size_t DIM2>
-    std::array<TYPE, DIM1> update(Dense<TYPE, DIM1, DIM2>& dense, const std::vector<TYPE, DIM2>& in_gradient) noexcept
+    std::array<TYPE, DIM1> update(Dense<TYPE, DIM1, DIM2>& dense, const std::array<TYPE, DIM2>& in_gradient) noexcept
     {
         std::array<TYPE, DIM1> out_gradient;
 
@@ -71,7 +71,7 @@ namespace nn
             out_gradient[i] = 0;
             
             for (std::size_t j = 0; j < DIM2; ++j) {
-                out_gradient[i] += in_gradient[j] * weight_matrix[j * DIM1 + i];
+                out_gradient[i] += in_gradient[j] * dense.weight_matrix[j * DIM1 + i];
             }
         }
 

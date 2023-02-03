@@ -16,10 +16,8 @@ namespace nn
     }
     losstype_t;
 
-    template <typename TYPE, std::size_t DIM>
-    std::array<TYPE, DIM> calculate_gradient_vector(losstype_t LOSS_TYPE,
-        const Loss<LossType>& loss,
-        const std::array<TYPE, DIM>& in_vector,
+    template <losstype_t LOSS_TYPE, typename TYPE, std::size_t DIM>
+    std::array<TYPE, DIM> calculate_gradient_vector(const std::array<TYPE, DIM>& in_vector,
         const std::array<TYPE, DIM>& target) noexcept
     {
         std::array<TYPE, DIM> out_gradient;
@@ -32,7 +30,7 @@ namespace nn
             auto y = target.begin();
 
             std::for_each(out_gradient.begin(), out_gradient.end(), [=](auto& el) mutable{
-                el = static_cast<TYPE>((2.0/in_vector_size) * ((*x) - (*y)));
+                el = static_cast<TYPE>((2.0/DIM) * ((*x) - (*y)));
                 ++x; ++y;
             });
         }
@@ -48,7 +46,7 @@ namespace nn
             };
 
             std::for_each(out_gradient.begin(), out_gradient.end(), [=](auto& el) mutable{
-                el = static_cast<TYPE>((1.0/in_vector_size) * sign((*x) - (*y)));
+                el = static_cast<TYPE>((1.0/DIM) * sign((*x) - (*y)));
                 ++x; ++y;
             });
         }
@@ -68,8 +66,8 @@ namespace nn
         return out_gradient;
     }
 
-    template <typename TYPE, std::size_t DIM>
-    TYPE calculate_loss(losstype_t LOSS_TYPE, const std::array<TYPE, DIM>& in_vector, const std::array<TYPE, DIM>& target_vector)
+    template <losstype_t LOSS_TYPE, typename TYPE, std::size_t DIM>
+    TYPE calculate_loss(const std::array<TYPE, DIM>& in_vector, const std::array<TYPE, DIM>& target_vector)
     {
 
         if constexpr (LOSS_TYPE == MEAN_SQUARED)

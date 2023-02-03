@@ -15,7 +15,7 @@ std::array<float, DIM2> initial_biases = {0.1, 0.09};
 
 int main(void)
 {
-    nn::Dense<float, DIM1, DIM2> dense{std::move(initial_weights), std::move(initial_biases)};
+    nn::Dense<float, DIM1, DIM2> dense{std::move(initial_weights), std::move(initial_biases), 0.01f};
     
     // Print the weights and biases before the update
     std::cout << "Weights before:\n";
@@ -39,7 +39,7 @@ int main(void)
     std::cout << "\n\n";
 
     // Process
-    std::array<float, DIM2> output = dense.apply(input);
+    std::array output = nn::apply(dense, input);
 
     // print the output
     std::cout << "Output: ";
@@ -59,7 +59,7 @@ int main(void)
     }
     std::cout << "\n\n";
 
-    std::array<float, DIM1> gradient = dense.update(error, 0.01);
+    std::array gradient = nn::update(dense, error);
 
     // Print the weights and biases after the update
     std::cout << "Weights after:\n";

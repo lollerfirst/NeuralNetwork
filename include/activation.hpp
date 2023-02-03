@@ -73,7 +73,7 @@ namespace nn
             for (auto i = in_vector.begin(), j = out_vector.begin(), k = activation.output.begin();
                 i != in_vector.end(); ++i, ++j, ++k)
             {
-                *k = *j = std::exp(*i) / (1 + std::exp(*i));
+                *k = *j = (TYPE)1 / ((TYPE)1 + std::exp(*i));
             }
         }
 
