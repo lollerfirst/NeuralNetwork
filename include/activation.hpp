@@ -4,6 +4,7 @@
 #include <array>
 #include <cmath>
 #include <cassert>
+#include <span>
 
 namespace nn
 {

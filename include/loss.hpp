@@ -2,6 +2,7 @@
 #define _LOSS_H
 
 #include <array>
+#include <span>
 #include <numeric>
 #include <cmath>
 #include <algorithm>

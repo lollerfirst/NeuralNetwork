@@ -3,8 +3,14 @@
 
 #include <cstddef>
 #include <array>
+#include <span>
 #include <cassert>
 #include <algorithm>
+#include <random>
+
+#ifdef __CUDA_ARCH__
+#include <cublas_v2.h>
+#endif
 
 namespace nn
 {
@@ -40,6 +46,14 @@ namespace nn
                 bias_vector{bias_init},
                 learning_rate{learning_rate}
                 {}
+            
+            Dense(TYPE learning_rate) : learning_rate{learning_rate}
+            {
+                std::default_random_engine engine(std::random_device{}());
+                std::uniform_real_distribution<TYPE> dist(static_cast<TYPE>(0), static_cast<TYPE>(1));
+                std::generate(std::begin(weight_matrix), std::end(weight_matrix), [&]{ return dist(engine); });
+                std::generate(std::begin(bias_vector), std::end(bias_vector), [&]{ return dist(engine); });
+            }
 
     };
 
