@@ -59,7 +59,7 @@ namespace nn
 
     // Processing
     template<typename TYPE, std::size_t DIM1, std::size_t DIM2>
-    std::array<TYPE, DIM2> apply(const Dense<TYPE, DIM1, DIM2>& dense, const std::array<TYPE, DIM1>& in_vector) noexcept
+    std::array<TYPE, DIM2> apply(const Dense<TYPE, DIM1, DIM2>& dense, auto in_vector) noexcept
     {
         std::array<TYPE, DIM2> out_vector;
 
@@ -76,7 +76,7 @@ namespace nn
 
     // Backpropagation
     template <typename TYPE, std::size_t DIM1, std::size_t DIM2>
-    std::array<TYPE, DIM1> update(Dense<TYPE, DIM1, DIM2>& dense, const std::array<TYPE, DIM2>& in_gradient) noexcept
+    std::array<TYPE, DIM1> update(Dense<TYPE, DIM1, DIM2>& dense, auto in_gradient) noexcept
     {
         std::array<TYPE, DIM1> out_gradient;
 
