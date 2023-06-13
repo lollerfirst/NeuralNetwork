@@ -7,6 +7,7 @@
 #include <span>
 #include <array>
 #include <tuple>
+#include <ranges>
 
 namespace nn
 {
@@ -34,17 +35,18 @@ namespace nn
         // Loop over the specified number of epochs
         for (std::size_t k = 0; k<epochs; ++k)
         {
-            // Slice the train_set and labels_set into smaller batches
-            std::span train_span{std::begin(train_set), TRAIN_DIM*BATCH};
-            std::span labels_span{std::begin(labels_set), LABELS_DIM*BATCH};
+            // C++ spans are broken (or very little intuitive to use) so using raw pointers to slice. Sue me, retards.
+            TYPE* train_span = std::data(std::begin(train_set));
+            TYPE* labels_span = std::data(std::begin(labels_set));
             std::size_t i = 0;
 
-            // Loop over all the batches in the training set
-            while (std::size(train_span) > 0 && std::size(labels_span) > 0)
+            // Loop over all of the batches in the training set
+            while (i < DEPTH)
             {
-                std::span train_batch_span {std::begin(train_span), TRAIN_DIM};
-                std::span labels_batch_span {std::begin(labels_span), LABELS_DIM};
-                std::size_t j = 0;
+                TYPE* train_batch_span = std::data(std::begin(train_span));
+                TYPE* labels_batch_span = std::data(std::begin(labels_span));
+                std::size_t train_batch_index = 0;
+                std::size_t labels_batch_index = 0;
                 
                 // Reset the total loss and gradient after each batch
                 compounded_loss = 0;
@@ -52,12 +54,12 @@ namespace nn
                 std::fill(std::begin(compounded_gradient), std::end(compounded_gradient), static_cast<TYPE>(0));
                 
                 // Loop over all samples in the batch
-                while (std::size(train_batch_span) > 0 && std::size(labels_batch_span) > 0)
+                while (train_batch_index < BATCH && labels_batch_index < BATCH)
                 {
                     std::array<TYPE, TRAIN_DIM> train_slice;
-                    std::copy(std::begin(train_batch_span), std::end(train_batch_span), std::begin(train_slice)); 
+                    std::copy(train_batch_span, train_batch_span + TRAIN_DIM, std::begin(train_slice)); 
                     std::array<TYPE, LABELS_DIM> labels_slice;
-                    std::copy(std::begin(labels_batch_span), std::end(labels_batch_span), std::begin(labels_slice));
+                    std::copy(labels_batch_span, labels_batch_span+LABELS_DIM, std::begin(labels_slice));
 
                     // Apply the layers on the sample data
                     auto statically_recursive_apply = [](auto& self, const auto& in_vector, auto& layer, auto&... layers)
@@ -87,9 +89,10 @@ namespace nn
                     });
 
                     // Set up next iteration
-                    ++j;
-                    train_batch_span = train_batch_span.subspan(TRAIN_DIM * j);
-                    labels_batch_span = labels_batch_span.subspan(LABELS_DIM * j);
+                    ++labels_batch_index;
+                    ++train_batch_index;
+                    train_batch_span += TRAIN_DIM;
+                    labels_batch_span += LABELS_DIM;
                 }
 
                 // Divide loss and elements of gradient by batch size
@@ -118,8 +121,8 @@ namespace nn
 
                 // Set up next iteration
                 ++i;
-                train_span = train_span.subspan(i*TRAIN_DIM*BATCH);
-                labels_span = labels_span.subspan(i*LABELS_DIM*BATCH);
+                train_span += TRAIN_DIM*BATCH;
+                labels_span += LABELS_DIM*BATCH;
             }
         }
 
@@ -138,8 +141,8 @@ namespace nn
         LAYERS&... layers) noexcept
         {
             TYPE compounded_loss = 0;
-            std::span test_span{std::begin(test_set), TEST_DIM};
-            std::span labels_span{std::begin(labels_set), LABELS_DIM};
+            std::span<TYPE, TEST_DIM> test_span{std::ranges::all_of()};
+            std::span<TYPE, LABELS_DIM> labels_span; labels_span{std::begin(labels_set), LABELS_DIM};
             std::size_t i = 0;
 
             while (std::size(test_span) > 0 && std::size(labels_span) > 0)
@@ -174,6 +177,14 @@ namespace nn
             return (compounded_loss / static_cast<TYPE>(DEPTH));
         }
     
+    
+    template <std::size_t DATA_DIM, std::size_t DATA_DEPTH, typename TYPE>
+    void split_data_labels(std::array<TYPE, DIM*DEPTH> data,
+        std::array<TYPE, (DATA_DIM-1)*DEPTH> train_set,
+        std::array<TYPE, DEPTH>)
+    {
+        
+    }
 }
 
 #endif

@@ -16,13 +16,14 @@ namespace nn
 {
 
     // Dense Layer
-    template <typename TYPE, std::size_t DIM1, std::size_t DIM2>
+    template <typename TYPE, std::size_t DIM1, std::size_t DIM2, std::size_t BATCH>
     struct Dense
     {
         public:
 
             std::array<TYPE, DIM1*DIM2> weight_matrix;
             std::array<TYPE, DIM2> bias_vector;
+            std::array<TYPE, DIM2> mean_output_vector = {static_cast<TYPE>(0)};
             TYPE learning_rate;
 
             Dense(std::initializer_list<TYPE> mat_init_list,
@@ -58,8 +59,8 @@ namespace nn
     };
 
     // Processing
-    template<typename TYPE, std::size_t DIM1, std::size_t DIM2>
-    std::array<TYPE, DIM2> apply(const Dense<TYPE, DIM1, DIM2>& dense, const std::array<TYPE, DIM1>& in_vector) noexcept
+    template<typename TYPE, std::size_t DIM1, std::size_t DIM2, std::size_t BATCH>
+    std::array<TYPE, DIM2> apply(const Dense<TYPE, DIM1, DIM2, BATCH>& dense, const std::array<TYPE, DIM1>& in_vector) noexcept
     {
         std::array<TYPE, DIM2> out_vector;
 
@@ -68,31 +69,29 @@ namespace nn
             out_vector[i] = dense.bias_vector[i];
             
             for (std::size_t j = 0; j < DIM1; ++j)
+            {
                 out_vector[i] += in_vector[j] * dense.weight_matrix[i * DIM1 + j];
+                
+                if constexpr (BATCH > 1)
+                    dense.mean_output_vector[i] = (dense.mean_output_vector[i]+out_vector[i]) / static_cast<TYPE>(2);
+                else
+                    dense.mean_output_vector[i] = out_vector[i];
+            }
         }
         
         return out_vector;
     }
 
     // Backpropagation
-    template <typename TYPE, std::size_t DIM1, std::size_t DIM2>
-    std::array<TYPE, DIM1> update(Dense<TYPE, DIM1, DIM2>& dense, const std::array<TYPE, DIM2>& in_gradient) noexcept
+    template <typename TYPE, std::size_t DIM1, std::size_t DIM2, std::size_t BATCH>
+    std::array<TYPE, DIM1> update(Dense<TYPE, DIM1, DIM2, BATCH>& dense, const std::array<TYPE, DIM2>& in_gradient) noexcept
     {
-        std::array<TYPE, DIM1> out_gradient;
-
-        // Compute out_gradient
-        for (std::size_t i = 0; i < DIM1; ++i) {
-            out_gradient[i] = 0;
-            
-            for (std::size_t j = 0; j < DIM2; ++j) {
-                out_gradient[i] += in_gradient[j] * dense.weight_matrix[j * DIM1 + i];
-            }
-        }
+        //std::array<TYPE, DIM1> out_gradient;
 
         // Update weight_matrix
         for (std::size_t i = 0; i < DIM1; ++i) {
             for (std::size_t j = 0; j < DIM2; ++j) {
-                dense.weight_matrix[j * DIM1 + i] -= dense.learning_rate * in_gradient[j] * out_gradient[i];
+                dense.weight_matrix[j * DIM1 + i] -= dense.learning_rate * in_gradient[j] * dense.mean_output_vector[j];
             }
         }
 

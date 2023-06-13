@@ -15,7 +15,7 @@ std::array<float, DIM2> initial_biases = {0.1, 0.09};
 
 int main(void)
 {
-    nn::Dense<float, DIM1, DIM2> dense{std::move(initial_weights), std::move(initial_biases), 0.01f};
+    nn::Dense<float, DIM1, DIM2, 1> dense{std::move(initial_weights), std::move(initial_biases), 0.01f};
     
     // Print the weights and biases before the update
     std::cout << "Weights before:\n";
