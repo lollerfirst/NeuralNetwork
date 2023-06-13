@@ -6,6 +6,7 @@
 #include <numeric>
 #include <cmath>
 #include <algorithm>
+#include <type_traits>
 
 namespace nn
 {
@@ -17,10 +18,15 @@ namespace nn
     }
     losstype_t;
 
-    template <losstype_t LOSS_TYPE, typename TYPE, std::size_t DIM>
-    std::array<TYPE, DIM> calculate_gradient_vector(const std::array<TYPE, DIM>& in_vector,
-        const std::array<TYPE, DIM>& target) noexcept
+    template <losstype_t LOSS, std::size_t DIM>
+    struct Loss
+    {};
+
+    template <losstype_t LOSS_TYPE, std::size_t DIM>
+    auto calculate_gradient_vector(Loss<LOSS_TYPE, DIM> loss, auto in_vector,
+        auto target) noexcept
     {
+        using TYPE = std::remove_reference_t<decltype(in_vector[0])>;
         std::array<TYPE, DIM> out_gradient;
         
         // Calculate derivative with respect to each input
@@ -67,15 +73,16 @@ namespace nn
         return out_gradient;
     }
 
-    template <losstype_t LOSS_TYPE, typename TYPE, std::size_t DIM>
-    TYPE calculate_loss(const std::array<TYPE, DIM>& in_vector, const std::array<TYPE, DIM>& target_vector)
+    template <losstype_t LOSS_TYPE, std::size_t DIM>
+    auto calculate_loss(Loss<LOSS_TYPE, DIM> loss, auto in_vector, auto target_vector)
     {
+        using TYPE = std::remove_reference_t<decltype(in_vector[0])>;
 
         if constexpr (LOSS_TYPE == MEAN_SQUARED)
         {
             auto y = target_vector.begin();
 
-            TYPE sum = std::accumulate(in_vector.begin(), in_vector.end(), static_cast<TYPE>(0),
+            auto sum = std::accumulate(in_vector.begin(), in_vector.end(), static_cast<TYPE>(0),
                 [=](auto acc, auto x) mutable{
                     auto res = acc + std::pow(x - (*y), 2);
                     ++y;
@@ -90,7 +97,7 @@ namespace nn
         {
             auto y = target_vector.begin();
 
-            TYPE sum = std::accumulate(in_vector.begin(), in_vector.end(), static_cast<TYPE>(0),
+            auto sum = std::accumulate(in_vector.begin(), in_vector.end(), static_cast<TYPE>(0),
                 [=](auto acc, auto x) mutable{
                     auto res = acc + std::abs(x - (*y));
                     ++y;
@@ -106,7 +113,7 @@ namespace nn
         {
             auto y = target_vector.begin();
 
-            TYPE sum = std::accumulate(in_vector.begin(), in_vector.end(), static_cast<TYPE>(0),
+            auto sum = std::accumulate(in_vector.begin(), in_vector.end(), static_cast<TYPE>(0),
                 [=](auto acc, auto x) mutable{
                     auto res = acc + (*y) * std::log(x) + (1 - (*y)) * std::log(1 - x);
                     ++y;

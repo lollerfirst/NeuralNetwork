@@ -21,12 +21,13 @@ namespace nn
         std::size_t LABELS_DIM,
         std::size_t DEPTH,
         std::size_t BATCH,
-        losstype_t LOSS,
         typename TYPE,
+        losstype_t LOSS,
         typename ... LAYERS>
     TYPE train(const std::array<TYPE, TRAIN_DIM*DEPTH>& train_set,
         const std::array<TYPE, LABELS_DIM*DEPTH>& labels_set,
         const std::size_t epochs,
+        const Loss<LOSS, LABELS_DIM> loss,
         LAYERS&... layers) noexcept
     {
         // Stores the total loss after each epoch
@@ -65,6 +66,7 @@ namespace nn
                     auto statically_recursive_apply = [](auto& self, const auto& in_vector, auto& layer, auto&... layers)
                     {
                         std::array intermediate_result = nn::apply(layer, in_vector);
+                        //std::span result_span{std::begin(intermediate_result), std::end(intermediate_result)};
 
                         if constexpr (sizeof...(layers) > 0)
                         {
@@ -76,11 +78,13 @@ namespace nn
                         }
                     };
 
-                    std::array result = statically_recursive_apply(statically_recursive_apply, train_slice, layers...);
+                    std::array result = statically_recursive_apply(statically_recursive_apply, train_batch_span, layers...);
+                    //std::span result_span{std::begin(result), std::end(result)};
+
 
                     // Compute and compound the loss
-                    compounded_loss += calculate_loss<LOSS>(result, labels_slice);
-                    std::array gradient_vector = calculate_gradient_vector<LOSS>(result, labels_slice);
+                    compounded_loss += calculate_loss(loss, result, labels_batch_span);
+                    std::array gradient_vector = calculate_gradient_vector(loss, result, labels_batch_span);
                     
                     auto gradient_vector_iter = std::begin(gradient_vector);
                     std::for_each(std::begin(compounded_gradient), std::end(compounded_gradient), [&](auto& val){
@@ -109,6 +113,8 @@ namespace nn
                     if constexpr (sizeof...(layers) > 0)
                     {
                         std::array intermediate_result = self(self, in_gradient, layers...);
+                        //std::span result_span{std::begin(intermediate_result), std::end(intermediate_result)};
+
                         return std::move(nn::update(layer, intermediate_result));
                     }
                     else
@@ -117,6 +123,7 @@ namespace nn
                     }
                 };
 
+                //std::span compounded_gradient_span{std::begin(compounded_gradient), std::end(compounded_gradient)};
                 (void) statically_recursive_update(statically_recursive_update, compounded_gradient, layers...);
 
                 // Set up next iteration
@@ -133,11 +140,12 @@ namespace nn
     template <std::size_t TEST_DIM,
         std::size_t LABELS_DIM,
         std::size_t DEPTH,
-        losstype_t LOSS,
         typename TYPE,
+        losstype_t LOSS,
         typename ... LAYERS>
     TYPE test(const std::array<TYPE, TEST_DIM*DEPTH>& test_set,
         const std::array<TYPE, LABELS_DIM*DEPTH>& labels_set,
+        Loss<LOSS, LABELS_DIM> loss,
         LAYERS&... layers) noexcept
         {
             TYPE compounded_loss = 0;
@@ -147,15 +155,11 @@ namespace nn
 
             while (std::size(test_span) > 0 && std::size(labels_span) > 0)
             {
-                std::array<TYPE, TEST_DIM> test_slice;
-                std::copy(std::begin(test_span), std::end(test_span), std::begin(test_slice)); 
-                std::array<TYPE, LABELS_DIM> labels_slice;
-                std::copy(std::begin(labels_span), std::end(labels_span), std::begin(labels_slice));
-
                 // Apply the layers on the sample data
                 auto statically_recursive_apply = [](auto& self, const auto& in_vector, auto& layer, auto&... layers)
                 {
                     std::array intermediate_result = nn::apply(layer, in_vector);
+                    //std::span span_result{std::begin(intermediate_result), std::end(intermediate_result)};
 
                     if constexpr (sizeof...(layers) > 0)
                     {
@@ -167,12 +171,13 @@ namespace nn
                     }
                 };
 
-                std::array result = statically_recursive_apply(statically_recursive_apply, test_slice, layers...);
-                compounded_loss += calculate_loss<LOSS>(result, labels_slice);
+                std::array result = statically_recursive_apply(statically_recursive_apply, test_span, layers...);
+                //std::span span_result{std::begin(result), std::end(result)};
+                compounded_loss += calculate_loss(loss, result, labels_span);
 
                 ++i;
-                test_span = test_span.subspan(TEST_DIM*i);
-                labels_span = labels_span.subspan(LABELS_DIM*i);
+                test_span = test_span.subspan(TEST_DIM*i, TEST_DIM);
+                labels_span = labels_span.subspan(LABELS_DIM*i, LABELS_DIM);
             }
             return (compounded_loss / static_cast<TYPE>(DEPTH));
         }

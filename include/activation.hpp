@@ -25,7 +25,7 @@ namespace nn
     };
 
     template <typename TYPE, actmode_t ACT_MODE, std::size_t DIM>
-    std::array<TYPE, DIM> apply(Activation<TYPE, ACT_MODE, DIM>& activation, const std::array<TYPE, DIM>& in_vector) noexcept
+    std::array<TYPE, DIM> apply(Activation<TYPE, ACT_MODE, DIM>& activation, auto in_vector) noexcept
     {
         std::array<TYPE, DIM> out_vector;
 
@@ -82,7 +82,7 @@ namespace nn
     }
 
     template<typename TYPE, actmode_t ACT_MODE, std::size_t DIM>
-    std::array<TYPE, DIM> update(const Activation<TYPE, ACT_MODE, DIM>& activation, const std::array<TYPE, DIM>& in_gradient) noexcept
+    std::array<TYPE, DIM> update(const Activation<TYPE, ACT_MODE, DIM>& activation, auto in_gradient) noexcept
     {
         std::array<TYPE, DIM> out_gradient{};
 

@@ -22,14 +22,17 @@ int main(void)
     nn::Dense<float, DIM2, DIM3> dense_2{0.01f};
     nn::Activation<float, nn::SIGMOID, DIM2> activation_1;
     nn::Activation<float, nn::RELU, DIM3> activation_2;
+
+    // Define the loss function
+    nn::Loss<nn::MEAN_SQUARED, DIM3> loss;
     
     // Call the train function
-    float train_loss = nn::train<DIM1, DIM3, DEPTH, BATCH, nn::MEAN_SQUARED>(train_set, labels_set, EPOCHS, dense_1, activation_1, dense_2, activation_2);
+    float train_error = nn::train<DIM1, DIM3, DEPTH, BATCH>(train_set, labels_set, EPOCHS, loss, dense_1, activation_1, dense_2, activation_2);
 
     // Call the test function
-    float test_loss = nn::test<DIM1, DIM3, DEPTH, nn::MEAN_SQUARED>(train_set, labels_set, dense_1, activation_1, dense_2, activation_2);
+    float test_error = nn::test<DIM1, DIM3, DEPTH>(train_set, labels_set, loss, dense_1, activation_1, dense_2, activation_2);
     
     // Check if the result is within the expected range
-    std::cout << "train_loss:  " << train_loss << "\n";
-    std::cout << "test_loss: " << test_loss << "\n"; 
+    std::cout << "train_loss:  " << train_error << "\n";
+    std::cout << "test_loss: " << test_error << "\n"; 
 }
